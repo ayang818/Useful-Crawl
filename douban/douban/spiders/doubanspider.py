@@ -18,7 +18,6 @@ class DoubanspiderSpider(scrapy.Spider):
         login_pic_url=response.xpath('//*[@id="captcha_image"]/@src').extract_first()                    
         print('获取验证码url中')
         print(login_pic_url)     
-        patten=re.compile(r'id=.+?en')
         data={'captcha-solution':input('输入验证码：'),
         'form_email':'1004210191@qq.com','form_password':'********'}
         yield FormRequest.from_response(response,formdata=data,callback=self.parsepage)
