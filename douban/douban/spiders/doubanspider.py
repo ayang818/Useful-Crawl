@@ -8,7 +8,6 @@ import re
 class DoubanspiderSpider(scrapy.Spider):
     name = 'doubanspider'
     start_urls = ['http://douban.com/']
-    data={'form_email':'1004210191@qq.com','form_password':'yfc719818'}
     login_url='https://accounts.douban.com/login'
     def start_requests(self):
         yield Request('https://accounts.douban.com/login',callback=self.login)
@@ -21,7 +20,7 @@ class DoubanspiderSpider(scrapy.Spider):
         print(login_pic_url)     
         patten=re.compile(r'id=.+?en')
         data={'captcha-solution':input('输入验证码：'),
-        'form_email':'1004210191@qq.com','form_password':'yfc719818'}
+        'form_email':'1004210191@qq.com','form_password':'********'}
         yield FormRequest.from_response(response,formdata=data,callback=self.parsepage)
 
     def parsepage(self, response):
