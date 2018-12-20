@@ -10,7 +10,7 @@ class GithubspiderSpider(scrapy.Spider):
         yield Request('https://github.com/login',callback=self.log)
     
     def log(self,response):
-        fd={'login':'1004210191@qq.com','password':'yfc719818'}
+        fd={'login':'1004210191@qq.com','password':'********'}
         yield FormRequest.from_response(response,formdata=fd,callback=self.parsepage)
     
     def parsepage(self,response):
