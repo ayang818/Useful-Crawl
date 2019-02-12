@@ -1,5 +1,5 @@
 '''
-项目解析:利用https://www.x88dushu.com/这个网站的图书资源进行解析爬取
+项目解析:利用https://www.x88dushu.com/ 这个网站的图书资源进行解析爬取
 技术路径:requests库，Beautiful库，re库
 实现方法:1.向网站主页面的url加入要搜索的图书信息元素，构造搜索图书页面的url，并在搜索图书页面解析获得目标图书的url。
         2.访问目标图书的url，解析页面，获得图书各个章节的url链接，构造列表。
@@ -9,15 +9,19 @@
 2018.12.16日:第二次修改,1.添加可视化的进度条。
                        2.解决没有图书导致的报错。
                        3.给程序添加了结束端口。
+2019.2.12日:使用lxml重写解析页面过程，提高爬取效率？？？
+            但是实际为什么变慢了？？？
 '''
+import winsound
 import requests
 from bs4 import BeautifulSoup
+from lxml import etree
 import re
 import os
 import time
 from tqdm import tqdm
 print('TIPS1：请保持网络状态良好哦。')
-#在网站的搜索栏里进行搜索，找出书籍目录的url链接xzcz
+#在网站的搜索栏里进行搜索，找出书籍目录的url链接
 def searchurl(url,dicts):
     try:
         r=requests.get(url,params=dicts,headers={'user-agent':'Mozilla/5.0'})
@@ -57,7 +61,7 @@ def geturllist(url,ulist):
 def getHTML(url):
     try:
         r=requests.get(url)
-        r.raise_for_status
+        r.raise_for_status()
         r.encoding=r.apparent_encoding        
         return r.text
     except:
@@ -67,10 +71,11 @@ def getHTML(url):
 #解析章节的html文本，得到章节标题和章节内容
 def parsepage(html):
     try:
-        soup=BeautifulSoup(html,'lxml')
-        a=soup.find('div',attrs={'class':"yd_text2"})   #找到储存在div标签下的章节内容
-        title=soup.find('h1')                           #找到标题所在的h1标签
-        return [a.text,title.string]                    #以列表形式返回内容
+        tree = etree.HTML(html)
+        title = tree.xpath('/html/body/div[5]/h1//text()')   
+        a = tree.xpath('/html/body/div[5]//div[4]//text()')
+        a = ",".join(a)                        
+        return [a,title[0]]                    #以列表形式返回内容
     except:
         return ''
    
@@ -92,16 +97,17 @@ def main():
     usefulurl=searchurl(url,data)   
     geturllist(usefulurl,ulist)
     a=0                  #计数
-    for i in tqdm(ulist,ncols=100):
-        aurl=usefulurl+'/'+i        #每个章节网页的url是目标图书url+ulist中的后缀，后缀例如12345.html
-        html=getHTML(aurl)          
-        text=parsepage(html)
+    for i in tqdm(ulist, ncols = 100):
+        aurl = usefulurl+'/'+i        #每个章节网页的url是目标图书url+ulist中的后缀，后缀例如12345.html
+        html = getHTML(aurl)          
+        text = parsepage(html)
         writefile(text,title)
-        a+=1      
+        a += 1      
     if a!=0:
         print('-----'*2)
         print('下载完毕')
         print('文件保存在D:/'+title+'.txt')
+        print("\a")
         print('用了',time.time()-time1,'秒')
         print('^-^')
         print('-----'*2)
@@ -111,6 +117,10 @@ def main():
 
 if __name__=='__main__':   
     main()
+
+
+
+        
 
 
         
