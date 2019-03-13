@@ -1,5 +1,5 @@
 '''
-项目解析:利用https://www.x88dushu.com/ 这个网站的图书资源进行解析爬取
+项目解析:利用https://www.x88dushu.com/这个网站的图书资源进行解析爬取
 技术路径:requests库，Beautiful库，re库
 实现方法:1.向网站主页面的url加入要搜索的图书信息元素，构造搜索图书页面的url，并在搜索图书页面解析获得目标图书的url。
         2.访问目标图书的url，解析页面，获得图书各个章节的url链接，构造列表。
@@ -9,18 +9,15 @@
 2018.12.16日:第二次修改,1.添加可视化的进度条。
                        2.解决没有图书导致的报错。
                        3.给程序添加了结束端口。
-2019.2.12日:使用lxml重写解析页面过程，提高爬取效率？？？
-            但是实际为什么变慢了？？？
 '''
-import winsound
 import requests
 from bs4 import BeautifulSoup
-from lxml import etree
 import re
 import os
 import time
 from tqdm import tqdm
-print('TIPS1：请保持网络状态良好哦。')
+from multiprocessing import Process,Pool
+import random
 #在网站的搜索栏里进行搜索，找出书籍目录的url链接
 def searchurl(url,dicts):
     try:
@@ -52,7 +49,9 @@ def geturllist(url,ulist):
         lista=soup.find_all('a',attrs={'href':re.compile(r'\d+\.html')})    #利用re库找到带有每个章节url的属性的a标签
         lista=lista[1:]                                                     #解析发现构造的列表中第一个和第二个url是无用的
         for i in lista:
-            ulist.append(i['href'])
+            juedui_url = url+i['href']
+            ulist.append(juedui_url)
+        #返回装了全部章节链接的列表，和列表的长度
         return ulist
     except:
         return ''
@@ -61,7 +60,7 @@ def geturllist(url,ulist):
 def getHTML(url):
     try:
         r=requests.get(url)
-        r.raise_for_status()
+        r.raise_for_status
         r.encoding=r.apparent_encoding        
         return r.text
     except:
@@ -71,56 +70,67 @@ def getHTML(url):
 #解析章节的html文本，得到章节标题和章节内容
 def parsepage(html):
     try:
-        tree = etree.HTML(html)
-        title = tree.xpath('/html/body/div[5]/h1//text()')   
-        a = tree.xpath('/html/body/div[5]//div[4]//text()')
-        a = ",".join(a)                        
-        return [a,title[0]]                    #以列表形式返回内容
+        soup=BeautifulSoup(html,'lxml')
+        a=soup.find('div',attrs={'class':"yd_text2"})   #找到储存在div标签下的章节内容
+        title=soup.find('h1')                           #找到标题所在的h1标签
+        return [a.text,title.string]                    #以列表形式返回内容
     except:
         return ''
    
 #对读取到的章节标题和章节内容进行文件的写入
 def writefile(text,title):
     try:
-        with open('D:/'+title+'.txt','a',encoding='utf-8') as f:            #使用utf-8编码方式写入文件
+        with open('D:/'+ title +'.txt','a',encoding='utf-8') as f:            #使用utf-8编码方式写入文件
             f.write('\t\t\t\t\t\t\t\t\t\t'+text[1]+'\n\n\n'+text[0])        #\t为了标题居中，\n标题与内容间换行
     except:
         return ''
         
-#主函数
-def main():
+# #为四个进程分配任务
+# def givetasks(ulist,allpagenumbers):
+#     print("开始分配任务")
+#     allpagenumbers %= 4
+#     list1 = ulist[:allpagenumbers]
+#     list2 = ulist[allpagenumbers:allpagenumbers*2]
+#     list3 = ulist[allpagenumbers*2:allpagenumbers*3]
+#     list4 = ulist[allpagenumbers*3:len(ulist)]
+#     print("分配任务结束")
+#     return [list1,list2,list3,list4]
+
+# #这里好像有坑，多进程的内存问题。
+# #启动四个线程。
+# def run_processes(after_split_list, nums):
+#     print("{} 开始写入".format(nums))
+#     for item in after_split_list:
+#         html = donload(item)
+#         #inner是一个列表，inner[1]是标题，inner[0]是文章内容
+#         html = "1"
+#         inner = parsepage(html)
+#         writefile(inner[1], inner[0],nums)
+#         print("{} 写入完毕".format(nums))
+def main(ulist):
+    for i in tqdm(ulist, ncols= 100):
+        html = getHTML(i)
+        inner = parsepage(html)
+        writefile(inner[1], inner[0])
+    print("保存完毕")
+
+
+if __name__=='__main__': 
+    ulist=[]   
     url='https://so.x88dushu.com/search/so.php?search_field=0'
-    title=str(input('(请输入正确且完整的小说名)输入小说名:'))
-    time1=time.time()
-    data={'q':title}     #作为params参数进行目标图书的搜索
-    ulist=[]             #用于获取目录url列表
-    usefulurl=searchurl(url,data)   
-    geturllist(usefulurl,ulist)
-    a=0                  #计数
-    for i in tqdm(ulist, ncols = 100):
-        aurl = usefulurl+'/'+i        #每个章节网页的url是目标图书url+ulist中的后缀，后缀例如12345.html
-        html = getHTML(aurl)          
-        text = parsepage(html)
-        writefile(text,title)
-        a += 1      
-    if a!=0:
-        print('-----'*2)
-        print('下载完毕')
-        print('文件保存在D:/'+title+'.txt')
-        print("\a")
-        print('用了',time.time()-time1,'秒')
-        print('^-^')
-        print('-----'*2)
-    label=input('如果想继续下载请按1,若不想请按2:')
-    if int(label)==1:
-        main()
-
-if __name__=='__main__':   
-    main()
-
-
-
-        
-
-
-        
+    title=str(input('(请输入正确且完整的书名)输入书名:'))
+    data={'q' : title} 
+    
+    #书籍首页
+    bookurl = searchurl(url,data)
+    # print(bookurl)
+    url_list  = geturllist(bookurl, ulist)
+    pool = Pool(processes = 4)
+    pool.map(main, url_list)
+    # task_list = givetasks(important[0], important[1])
+    #将包含四个任务进程的列表
+    
+    # for item in range(len(task_list)):
+    #     process = Process(target = run_processes, args = (task_list[item], item+1))
+    #     process.start()
+    
