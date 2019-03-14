@@ -58,14 +58,17 @@ def geturllist(url,ulist):
 
 #得到各个章节的html文本
 def getHTML(url):
-    try:
-        r=requests.get(url)
-        r.raise_for_status
-        r.encoding=r.apparent_encoding        
-        return r.text
-    except:
-        print('解析页面失败')
-        return ''
+    # try:
+    r=requests.get(url)
+    r.raise_for_status
+    r.encoding=r.apparent_encoding       
+    # return r.text 
+    inner = parsepage(r.text)
+    writefile(inner[1], inner[0])
+    print("正在下载")
+    # except:
+    #     print('解析页面失败')
+    #     return ''
     
 #解析章节的html文本，得到章节标题和章节内容
 def parsepage(html):
@@ -78,59 +81,22 @@ def parsepage(html):
         return ''
    
 #对读取到的章节标题和章节内容进行文件的写入
-def writefile(text,title):
-    try:
-        with open('D:/'+ title +'.txt','a',encoding='utf-8') as f:            #使用utf-8编码方式写入文件
-            f.write('\t\t\t\t\t\t\t\t\t\t'+text[1]+'\n\n\n'+text[0])        #\t为了标题居中，\n标题与内容间换行
-    except:
-        return ''
-        
-# #为四个进程分配任务
-# def givetasks(ulist,allpagenumbers):
-#     print("开始分配任务")
-#     allpagenumbers %= 4
-#     list1 = ulist[:allpagenumbers]
-#     list2 = ulist[allpagenumbers:allpagenumbers*2]
-#     list3 = ulist[allpagenumbers*2:allpagenumbers*3]
-#     list4 = ulist[allpagenumbers*3:len(ulist)]
-#     print("分配任务结束")
-#     return [list1,list2,list3,list4]
-
-# #这里好像有坑，多进程的内存问题。
-# #启动四个线程。
-# def run_processes(after_split_list, nums):
-#     print("{} 开始写入".format(nums))
-#     for item in after_split_list:
-#         html = donload(item)
-#         #inner是一个列表，inner[1]是标题，inner[0]是文章内容
-#         html = "1"
-#         inner = parsepage(html)
-#         writefile(inner[1], inner[0],nums)
-#         print("{} 写入完毕".format(nums))
-def main(ulist):
-    for i in tqdm(ulist, ncols= 100):
-        html = getHTML(i)
-        inner = parsepage(html)
-        writefile(inner[1], inner[0])
-    print("保存完毕")
-
+def writefile(text,titl):
+    with open('D:/'+ "santi" +'.txt','a', encoding= "utf-8") as f:            #使用utf-8编码方式写入文件
+        f.write('\t\t\t\t\t\t\t\t\t\t'+titl+'\n\n\n'+text)        #\t为了标题居中，\n标题与内容间换行
+    
 
 if __name__=='__main__': 
     ulist=[]   
     url='https://so.x88dushu.com/search/so.php?search_field=0'
-    title=str(input('(请输入正确且完整的书名)输入书名:'))
+    title = str(input('(请输入正确且完整的书名)输入书名:'))
     data={'q' : title} 
-    
     #书籍首页
     bookurl = searchurl(url,data)
     # print(bookurl)
     url_list  = geturllist(bookurl, ulist)
-    pool = Pool(processes = 4)
-    pool.map(main, url_list)
-    # task_list = givetasks(important[0], important[1])
-    #将包含四个任务进程的列表
-    
-    # for item in range(len(task_list)):
-    #     process = Process(target = run_processes, args = (task_list[item], item+1))
-    #     process.start()
-    
+    pool = Pool(processes = 8)
+    start_time = time.time()
+    pool.map(getHTML, url_list)
+    print("使用{}秒".format(time.time()-start_time))
+    print("下载完毕")
