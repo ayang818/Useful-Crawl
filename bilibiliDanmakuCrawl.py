@@ -32,7 +32,7 @@ def searchCid(av):
 
 def writeFile(tempMessageList, av):
     i = 1
-    with open("D:/Danmaku{}.txt".format(av), "a") as f:
+    with open("D:/Danmaku{}.txt".format(av), "w") as f:
         for item in tempMessageList:
             try:
                 f.write("-----------\n")
@@ -46,7 +46,18 @@ def writeFile(tempMessageList, av):
                 i+=1
 
 if __name__ == "__main__":
-    av = input("请输入AV号 : ")
-    print("正在保存，请稍等")
-    writeFile(parseDOM(getApi(searchCid(av))), av)
-    print("弹幕文件保存在 D:/Danmaku{}.txt".format(av))
+    label = "1"
+    while True:
+        if label == str(1):
+            av = input("请输入AV号 : ")
+            print("正在保存，请稍等")
+            try:
+                writeFile(parseDOM(getApi(searchCid(av))), av)
+                print("弹幕文件保存在 D:/Danmaku{}.txt".format(av))
+            except:
+                print("请确保输入了正确的av号，或检查网络连接是否正常")
+            finally:
+                av = None
+                label = input("按1继续，按任意键并回车退出 : ")
+        else:
+            break
