@@ -1,8 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-import binascii
-
 
 # URL = "https://api.bilibili.com/x/v1/dm/list.so?oid=103577530";
 # 5f14db60
