@@ -46,7 +46,7 @@ def writeFile(tempMessageList, av, isSearchUserID):
                     for UID in rehash(item["p"].split(",")[6]):
                         f.write("UID:" + str(UID) +"\n")
                 else:
-                    f.write("加密ID"+item["p"].split(",")[6]+"\n")
+                    f.write("加密ID:"+item["p"].split(",")[6]+"\n")
                 f.write(item.text+"\n")
             except:
                 print("第{}条弹幕保存失败".format(index+1))
