@@ -2,9 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-# URL = "https://api.bilibili.com/x/v1/dm/list.so?oid=103577530";
-# 5f14db60
-
+# URL = "https://api.bilibili.com/x/v1/dm/list.so?oid=103577530"
 def getUrl(url):
     res = requests.get(url, headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"})
     res.encoding = res.apparent_encoding
